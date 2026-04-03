@@ -1,4 +1,4 @@
-name: Flask CI/CD Deploy
+name: Deploy Flask App (OpenCV + Gunicorn)
 
 on:
   push:
@@ -6,43 +6,52 @@ on:
       - main
 
 jobs:
-  deploy: 
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_IP }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
+          port: 22
           script: |
-            
-            cd /home/ubuntu/flask-cicd || exit
+            cd /home/ubuntu/flask-cicd
 
+            echo "Pull latest code"
             git pull origin main
 
+            echo "Install system dependencies (IMPORTANT for OpenCV)"
             sudo apt update
-            sudo apt install python3-pip python3-venv -y
+            sudo apt install -y python3-pip python3-venv libgl1 libglib2.0-0
 
-           
+            echo "Create venv if not exists"
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
 
-            
+            echo "Activate venv"
             source venv/bin/activate
 
-            
+            echo "Upgrade pip"
             pip install --upgrade pip
+
+            echo "Install Python dependencies"
             pip install -r requirements.txt
 
-            
+            echo "Ensure OpenCV installed"
             pip install opencv-python
 
-            pkill -f app.py || true
+            echo "Ensure gunicorn installed"
+            pip install gunicorn
 
-            nohup python3 instance/app.py > output.log 2>&1 &
+            echo "Stop old app"
+            pkill -f gunicorn || true
+
+            echo "Start app with gunicorn"
+            nohup gunicorn --bind 0.0.0.0:8000 instance.app:app > output.log 2>&1 &
