@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/ubuntu/<your-repo>
+cd /home/ubuntu/flask-cicd
 
 git pull origin main
 
