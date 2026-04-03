@@ -22,32 +22,7 @@ jobs:
     - name: Connect & Deploy
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd /home/ubuntu/<your-repo>
+          cd /home/ubuntu/flask-cicd
           ./deploy.sh
         EOFname: Flask CI/CD Deploy
 
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/key.pem
-        chmod 600 ~/.ssh/key.pem
-
-    - name: Connect & Deploy
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd /home/ubuntu/flask-cicd
-          ./deploy.sh
-        EOF
